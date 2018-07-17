@@ -3,11 +3,13 @@
 #include <argp.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include "network.h"
+#include "logger.h"
 
-static struct argp_option options[] = {
+const static struct argp_option options[] = {
         {0, 'c',          "dir",     OPTION_ARG_OPTIONAL, "Allow execution of CGIs from the given directory"},
         {0, 'd',          0,         OPTION_ARG_OPTIONAL, "Enter debugging mode"},
-        {0, 'i',          "address", OPTION_ARG_OPTIONAL, "Don't produce any output"},
+        {0, 'i',          "address", OPTION_ARG_OPTIONAL, "Bind to the given IPv4 or IPv6 address"},
         {0, 'l',          "file",    OPTION_ARG_OPTIONAL, "Log all requests to the given file"},
         {0, 'p',          "port",    OPTION_ARG_OPTIONAL, "Listen on the given por"},
         {0, ARGP_KEY_ARG, "dir", 0,                       0},
@@ -73,7 +75,8 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 /* Our argp parser. */
 static struct argp argp = {options, parse_opt, 0, 0};
 
-int main(int argc, char **argv) {
+
+int main(int argc, char *argv[]) {
     struct arguments arguments;
 
     /* Default values. */
@@ -90,6 +93,14 @@ int main(int argc, char **argv) {
        be reflected in arguments. */
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
+    FILE *logger = NULL;
+    if (arguments.log_file != NULL) {
+        logger = make_logger(arguments.log_file);
+    } else {
+        logger = stdout;
+    }
+    start_listener(arguments.port, logger);
 
-    exit(0);
+
+//    exit(0);
 }

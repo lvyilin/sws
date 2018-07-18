@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include "response.h"
 #include "fileio.h"
 
@@ -8,6 +9,31 @@ int is_regular_file(const char *path) {
     struct stat path_stat;
     stat(path, &path_stat);
     return S_ISREG(path_stat.st_mode);
+}
+
+int is_valid_dir(const char *path) {
+    DIR *dir = opendir(path);
+    if (dir) {
+        closedir(dir);
+        return 1;
+    }
+    return 0;
+}
+
+void exec_command(const char *command, char *output) {
+    FILE *pipe = popen(command, "r");
+    if (pipe != NULL) {
+        char buffer[2048] = {0};
+        char c;
+        int i = 0;
+        while ((c = getc(pipe)) != EOF) {
+            buffer[i++] = c;
+        }
+        sprintf(output, "<html><head><title>sws</title></head><body><pre>%s</pre></body></html>", buffer);
+        buffer[i] = '\0';
+        pclose(pipe);
+    }
+
 }
 
 void get_basic_info(struct Response *header) {
@@ -22,7 +48,7 @@ void get_basic_info(struct Response *header) {
 
 }
 
-void get_file_path(char *url, char *index_path, char *dest) {
+void get_url_path(char *url, char *index_path, char *dest) {
     char dir[512];
     int cursor = 0, cur = 0;
     int url_len = strlen(url);
@@ -35,13 +61,12 @@ void get_file_path(char *url, char *index_path, char *dest) {
     strcpy(dest, index_path);
     strcat(dest, "/");
     strcat(dest, dir);
-    if (!is_regular_file(dest)) {
-        if (dest[strlen(dest) - 1] != '/')
-            strcat(dest, "/");
-        strcat(dest, IndexFile);
-    }
-
-    printf("%s\n", dest);
+//    if (!is_regular_file(dest)) {
+//        if (dest[strlen(dest) - 1] != '/')
+//            strcat(dest, "/");
+//        strcat(dest, IndexFile);
+//    }
+//    printf("%s\n", dest);
 }
 
 int get_file_info(char *filepath, struct Response *header) {
@@ -58,7 +83,8 @@ int get_file_info(char *filepath, struct Response *header) {
 }
 
 
-void get_response(struct RequestInfo request, char *response, char *index_path, char *cgi_path) {
+void get_response(struct RequestInfo request, struct ResponseInfo *response_info, char *response, char *index_path,
+                  char *cgi_path) {
     struct Response response_header;
 
     strcpy(response_header.http_version, HTTP_VERSION);
@@ -68,49 +94,50 @@ void get_response(struct RequestInfo request, char *response, char *index_path, 
 
     if (cgi_path != NULL && starts_with("/cgi-bin/", request.url_pattern, strlen(request.url_pattern))) {
         response_header.status_code = OK;
-        char process_name[256];
+        char process_name[256] = {0};
         int cur = 0, cursor = strlen("/cgi-bin/");
         while (request.url_pattern[cursor] != '\0' && request.url_pattern[cursor] != ' ') {
             process_name[cur++] = request.url_pattern[cursor++];
         }
-        printf("%s\n", process_name);
         char command[512];
         sprintf(command, "%s/%s 2>&1", cgi_path, process_name);
-
-        if (access(command, F_OK) != -1) {
-            FILE *pipe = popen(command, "r");
-            if (pipe != NULL) {
-                char c;
-                while ((c = getc(pipe)) != EOF) {
-                    strcat(response_header.body, c);
-                }
-                pclose(pipe);
-            }
-        }
+        exec_command(command, response_header.body);
 
 
     } else {
-        char filepath[1024];
-        get_file_path(request.url_pattern, index_path, filepath);
+        char urlpath[1024];
 
-        response_header.status_code = get_file_info(filepath, &response_header);
-        strcpy(response_header.content_type, "text/html");//TODO: check mime here
+        get_url_path(request.url_pattern, index_path, urlpath);
+        if (is_regular_file(urlpath)) {
+            response_header.status_code = get_file_info(urlpath, &response_header);
 
-        switch (request.method) {
-            case GET: {
-                read_file(filepath, response_header.body, sizeof(response_header.body));
+            switch (request.method) {
+                case GET: {
+                    read_file(urlpath, response_header.body, sizeof(response_header.body));
+                    break;
+                }
+                case POST:
 
-                break;
+                    break;
+                default:
+                    break;
             }
-            case POST:
-                break;
-            default:
-                break;
+        } else if (is_valid_dir(urlpath)) {
+            char cmd[256];
+            sprintf(cmd, "ls -lhF %s", urlpath);
+            exec_command(cmd, response_header.body);
+
+        } else {
+
         }
     }
+    strcpy(response_header.content_type, "text/html; charset=UTF-8");
     response_header.content_length = strlen(response_header.body);
+    response_info->content_length = response_header.content_length;
 
     get_status_msg(response_header.status_code, response_header.status_msg);
+    strcpy(response_info->status_msg, response_header.status_msg);
+
     build_response(&response_header, response);
 }
 
@@ -161,4 +188,5 @@ void get_status_msg(enum HttpStatus status, char *dest) {
             strcpy(dest, "Not Found");
     }
 }
+
 

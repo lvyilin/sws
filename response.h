@@ -7,9 +7,9 @@
 
 void get_basic_info(struct Response *header);
 
-void get_response(struct RequestInfo request, char *response, char *index_path, char *cgi_path);
+void get_response(struct RequestInfo request,struct ResponseInfo *response_info, char *response, char *index_path, char *cgi_path);
 
-void get_file_path(char *url, char *index_path, char *dest);
+void get_url_path(char *url, char *index_path, char *dest);
 
 int get_file_info(char *filepath, struct Response *header);
 

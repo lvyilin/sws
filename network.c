@@ -1,4 +1,5 @@
 #include "network.h"
+#include "logger.h"
 
 
 in_addr_t get_binary_addr(const char *src) {
@@ -12,7 +13,7 @@ in_addr_t get_binary_addr(const char *src) {
 }
 
 void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, char *cgi_path, int debug) {
-    int server_fd, new_socket, valread;
+    int server_fd, new_socket;
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
@@ -48,16 +49,26 @@ void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, c
             exit(EXIT_FAILURE);
         }
 
-        valread = read(new_socket, buffer, MAX_REQUEST_BUFFER);
-        printf("%s\n", buffer);
+        read(new_socket, buffer, MAX_REQUEST_BUFFER);
 
-        struct RequestInfo req_info = request_parse(buffer, strlen(buffer));
+        struct RequestInfo req_info;
+        struct ResponseInfo resp_info;
+        struct sockaddr_in* v4addr = (struct sockaddr_in*)&address;
+        struct in_addr ipaddr = v4addr->sin_addr;
+        inet_ntop( AF_INET, &ipaddr, req_info.ip_address, INET_ADDRSTRLEN );
+        request_parse(buffer, strlen(buffer),&req_info);
+
         char response_buffer[MAX_RESPONSE_BUFFER];
-        get_response(req_info, response_buffer, index_path, cgi_path);
+        get_response(req_info,&resp_info, response_buffer, index_path, cgi_path);
 
         send(new_socket, response_buffer, strlen(response_buffer), 0);
-        printf("Response:\n%s", response_buffer);
 
         close(new_socket);
+
+        // logging
+        char log_info[256];
+        log_to(&req_info,&resp_info,logger);
+        fflush(logger);
+
     } while (!debug);
 }

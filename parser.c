@@ -1,19 +1,28 @@
 #include "parser.h"
+#include <time.h>
 
-struct RequestInfo request_parse(char *request, int len) {
-    struct RequestInfo info;
-    info.method = Invalid;
-    char buffer[128] = {0};
+void request_parse(char *request, int len, struct RequestInfo *info) {
+    time_t rawtime;
+    struct tm * timeinfo;
+    time ( &rawtime );
+    timeinfo = localtime ( &rawtime);
+
+    sprintf(info->date, "%s", asctime(timeinfo));
+    info->date[strlen(info->date)-1] = '\0';
+
+    info->method = Invalid;
+    char buffer[128];
     int i = 0;
-    while (i < len && request[i] != '\n' && request[i] != EOF) {
+    while (i < len && request[i] != '\r' &&request[i]!='\n' && request[i] != EOF) {
         buffer[i] = request[i];
         ++i;
     }
     buffer[i] = '\0';
+    strcpy(info->first_line,buffer);
 
     for (int i = 0; i < HttpMethodNum; ++i) {
         if (starts_with(HttpMethodStr[i], buffer, strlen(buffer))) {
-            info.method = i;
+            info->method = i;
             break;
         }
     }
@@ -27,8 +36,7 @@ struct RequestInfo request_parse(char *request, int len) {
         buffer2[k++] = request[j++];
     }
     buffer2[k] = '\0';
-    strcpy(info.url_pattern, buffer2);
+    strcpy(info->url_pattern, buffer2);
 
     //TODO: post method code here
-    return info;
 }

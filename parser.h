@@ -6,6 +6,6 @@
 
 
 
-struct RequestInfo request_parse(char *request, int len);
+void request_parse(char *request, int len, struct RequestInfo *info);
 
 #endif //SWS_PARSER_H

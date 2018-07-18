@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <argp.h>
-#include <stdbool.h>
 #include <unistd.h>
 #include "network.h"
 #include "logger.h"
@@ -19,11 +18,11 @@ const static struct argp_option options[] = {
 /* Used by main to communicate with parse_opt. */
 struct arguments {
     char *cgi_dir;
-    bool debug_mode;
+    int debug_mode;
     char *bind_addr;
     char *log_file;
     int port;
-    char *current_path;
+    char *index_path;
 };
 
 /* Parse a single option. */
@@ -37,7 +36,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
             arguments->cgi_dir = arg;
             break;
         case 'd':
-            arguments->debug_mode = true;
+            arguments->debug_mode = 1;
             break;
         case 'i':
             arguments->bind_addr = arg;
@@ -56,7 +55,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
                 /* Too many arguments. */
                 argp_usage(state);
 
-            arguments->current_path = arg;
+            arguments->index_path = arg;
 
             break;
 
@@ -75,32 +74,50 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 /* Our argp parser. */
 static struct argp argp = {options, parse_opt, 0, 0};
 
+void to_absolute_path(char *path, char *buffer, char **arg) {
+    if (!is_absolute_path(path)) {
+        get_absolute_path(path, buffer);
+        (*arg) = buffer;
+    }
+}
 
 int main(int argc, char *argv[]) {
     struct arguments arguments;
 
     /* Default values. */
     arguments.cgi_dir = NULL;
-    arguments.debug_mode = false;
+    arguments.debug_mode = 0;
     arguments.bind_addr = NULL;
     arguments.log_file = NULL;
     arguments.port = 8080;
-    char cwd[1024];
-    getcwd(cwd, sizeof(cwd));
-    arguments.current_path = cwd;
+    arguments.index_path = NULL;
 
     /* Parse our arguments; every option seen by parse_opt will
        be reflected in arguments. */
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
-
+    char dir_buffer[1024], dir_buffer2[1024], dir_buffer3[1024];
+    strcpy(dir_buffer, arguments.cgi_dir);
+    strcpy(dir_buffer2, arguments.log_file);
+    strcpy(dir_buffer3, arguments.index_path);
+    arguments.cgi_dir = dir_buffer;
+    arguments.log_file = dir_buffer2;
+    arguments.index_path = dir_buffer3;
+    /* Make arguments path to absolute path */
+    char buffer[1024], buffer2[1024], buffer3[1024];
+    to_absolute_path(arguments.index_path, buffer3, &arguments.index_path);
+    to_absolute_path(arguments.log_file, buffer, &arguments.log_file);
+    to_absolute_path(arguments.cgi_dir, buffer2, &arguments.cgi_dir);
+    printf("%s\n%s\n%s\n", arguments.cgi_dir, arguments.log_file, arguments.index_path);
     FILE *logger = NULL;
     if (arguments.log_file != NULL) {
         logger = make_logger(arguments.log_file);
     } else {
         logger = stdout;
     }
-    start_listener(arguments.port, logger);
 
+    start_listener(arguments.port, arguments.bind_addr, logger, arguments.index_path, arguments.cgi_dir,
+                   arguments.debug_mode);
 
+    close_logger(logger);
 //    exit(0);
 }

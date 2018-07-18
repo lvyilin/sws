@@ -1,11 +1,13 @@
 #ifndef SWS_UTILS_H_
 #define SWS_UTILS_H_
 
+#define MAX_RESPONSE_BUFFER (1024*1024)
+#define MAX_RESPONSE_BODY_BUFFER ((1024*1024)-720)
 #include <string.h>
 
 extern const int HttpMethodNum;
 extern const char *HttpMethodStr[];
-
+extern const char *IndexFile;
 enum HttpMethod {
     GET = 0,
     POST = 1,
@@ -15,12 +17,31 @@ enum HttpMethod {
     Invalid = 100
 };
 
-struct ResponseHeader {
-    char date[1024];
-    char server[1024];
-    char last_modified[1024];
-    char content_type[1024];
-    long long content_length;
+enum HttpStatus {
+    OK = 200, NOT_FOUND = 404
+};
+
+
+struct Response {
+    char http_version[16];
+    enum HttpStatus status_code;
+    char status_msg[16];
+    char connection[16];
+    char date[64];
+    char server[16];
+    char last_modified[256];
+    char content_type[256];
+    unsigned long long content_length;
+    char body[MAX_RESPONSE_BODY_BUFFER];
+};
+
+
+#define MAX_BODY_SIZE 1048576
+#define MAX_URL_SIZE 1024
+struct RequestInfo {
+    enum HttpMethod method;
+    char url_pattern[MAX_URL_SIZE];
+    char body[MAX_BODY_SIZE];
 };
 
 int starts_with(const char *pre, const char *str, int str_len);

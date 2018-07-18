@@ -10,5 +10,6 @@ int log_to(FILE *logger) {
 }
 
 int close_logger(FILE *logger) {
-    return fclose(logger);
+    if (logger)
+        return fclose(logger);
 }

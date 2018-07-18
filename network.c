@@ -17,7 +17,6 @@ void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, c
     int opt = 1;
     int addrlen = sizeof(address);
     char buffer[MAX_REQUEST_BUFFER] = {0};
-    char *hello = "Hello from server";
 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("socket failed");

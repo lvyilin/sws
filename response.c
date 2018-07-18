@@ -16,6 +16,9 @@ void get_basic_info(struct Response *header) {
     time(&now);
     gtime = gmtime(&now);
     sprintf(header->date, "%s", asctime(gtime));
+    if (header->date[strlen(header->date) - 1] == '\n') {
+        header->date[strlen(header->date) - 1] = '\0';
+    }
 
 }
 
@@ -46,6 +49,9 @@ int get_file_info(char *filepath, struct Response *header) {
         struct stat attr;
         stat(filepath, &attr);
         sprintf(header->last_modified, "%s", ctime(&attr.st_mtime));
+        if (header->last_modified[strlen(header->last_modified) - 1] == '\n') {
+            header->last_modified[strlen(header->last_modified) - 1] = '\0';
+        }
         return OK;
     }
     return NOT_FOUND;
@@ -60,21 +66,40 @@ void get_response(struct RequestInfo request, char *response, char *index_path, 
     strcpy(response_header.server, SERVER_INFO);
     get_basic_info(&response_header);
 
-    if (cgi_path != NULL && starts_with("/cgi-bin", request.url_pattern, strlen(request.url_pattern))) {
+    if (cgi_path != NULL && starts_with("/cgi-bin/", request.url_pattern, strlen(request.url_pattern))) {
         response_header.status_code = OK;
+        char process_name[256];
+        int cur = 0, cursor = strlen("/cgi-bin/");
+        while (request.url_pattern[cursor] != '\0' && request.url_pattern[cursor] != ' ') {
+            process_name[cur++] = request.url_pattern[cursor++];
+        }
+        printf("%s\n", process_name);
+        char command[512];
+        sprintf(command, "%s/%s 2>&1", cgi_path, process_name);
+
+        if (access(command, F_OK) != -1) {
+            FILE *pipe = popen(command, "r");
+            if (pipe != NULL) {
+                char c;
+                while ((c = getc(pipe)) != EOF) {
+                    strcat(response_header.body, c);
+                }
+                pclose(pipe);
+            }
+        }
+
+
     } else {
         char filepath[1024];
         get_file_path(request.url_pattern, index_path, filepath);
 
-        enum HttpStatus status = get_file_info(filepath, &response_header);
-
-        response_header.status_code = status;
+        response_header.status_code = get_file_info(filepath, &response_header);
         strcpy(response_header.content_type, "text/html");//TODO: check mime here
 
         switch (request.method) {
             case GET: {
                 read_file(filepath, response_header.body, sizeof(response_header.body));
-                response_header.content_length = strlen(response_header.body);
+
                 break;
             }
             case POST:
@@ -83,6 +108,7 @@ void get_response(struct RequestInfo request, char *response, char *index_path, 
                 break;
         }
     }
+    response_header.content_length = strlen(response_header.body);
 
     get_status_msg(response_header.status_code, response_header.status_msg);
     build_response(&response_header, response);
@@ -93,9 +119,9 @@ void build_response(struct Response *response, char *dest) {
         sprintf(dest,
                 "%s %d %s\n"
                 "Connection: %s\n"
-                "Date: %s"
+                "Date: %s\n"
                 "Server: %s\n"
-                "Last-Modified: %s"
+                "Last-Modified: %s\n"
                 "Content-Type: %s\n"
                 "Content-Lenght: %llu\n\n"
                 "%s",
@@ -113,7 +139,7 @@ void build_response(struct Response *response, char *dest) {
         sprintf(dest,
                 "%s %d %s\n"
                 "Connection: %s\n"
-                "Date: %s"
+                "Date: %s\n"
                 "Server: %s\n\n",
                 response->http_version,
                 response->status_code,
@@ -135,3 +161,4 @@ void get_status_msg(enum HttpStatus status, char *dest) {
             strcpy(dest, "Not Found");
     }
 }
+

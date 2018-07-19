@@ -50,7 +50,7 @@ void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, c
         }
 
         read(new_socket, buffer, MAX_REQUEST_BUFFER);
-//        printf("%s\n", buffer);
+        printf("%s\n", buffer);
         struct RequestInfo req_info;
         struct ResponseInfo resp_info;
         struct sockaddr_in *v4addr = (struct sockaddr_in *) &address;

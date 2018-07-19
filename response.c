@@ -137,64 +137,76 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
                 response_header.status_code = OK;
                 break;
             }
+            case HEAD: {
+                if (is_regular_file(urlpath)) {
+                    response_header.status_code = get_file_info(urlpath, &response_header);
+                } else if (is_valid_dir(urlpath)) {
+                    response_header.status_code = OK;
+                }else{
+                    response_header.status_code = NOT_FOUND;
+                }
+                break;
+            }
+
+
+            }
+        }
+        strcpy(response_header.content_type, "text/html; charset=UTF-8");
+        response_header.content_length = strlen(response_header.body);
+        response_info->content_length = response_header.content_length;
+
+        get_status_msg(response_header.status_code, response_header.status_msg);
+        strcpy(response_info->status_msg, response_header.status_msg);
+
+        build_response(&response_header, response);
+    }
+
+    void build_response(struct Response *response, char *dest) {
+        if (response->status_code == OK) {
+            sprintf(dest,
+                    "%s %d %s\n"
+                    "Connection: %s\n"
+                    "Date: %s\n"
+                    "Server: %s\n"
+                    "Last-Modified: %s\n"
+                    "Content-Type: %s\n"
+                    "Content-Lenght: %llu\n\n"
+                    "%s",
+                    response->http_version,
+                    response->status_code,
+                    response->status_msg,
+                    response->connection,
+                    response->date,
+                    response->server,
+                    response->last_modified,
+                    response->content_type,
+                    response->content_length,
+                    response->body);
+        } else {
+            sprintf(dest,
+                    "%s %d %s\n"
+                    "Connection: %s\n"
+                    "Date: %s\n"
+                    "Server: %s\n\n",
+                    response->http_version,
+                    response->status_code,
+                    response->status_msg,
+                    response->connection,
+                    response->date,
+                    response->server
+            );
+        }
+
+    }
+
+    void get_status_msg(enum HttpStatus status, char *dest) {
+        switch (status) {
+            case OK:
+                strcpy(dest, "OK");
+                break;
+            case NOT_FOUND:
+                strcpy(dest, "Not Found");
         }
     }
-    strcpy(response_header.content_type, "text/html; charset=UTF-8");
-    response_header.content_length = strlen(response_header.body);
-    response_info->content_length = response_header.content_length;
-
-    get_status_msg(response_header.status_code, response_header.status_msg);
-    strcpy(response_info->status_msg, response_header.status_msg);
-
-    build_response(&response_header, response);
-}
-
-void build_response(struct Response *response, char *dest) {
-    if (response->status_code == OK) {
-        sprintf(dest,
-                "%s %d %s\n"
-                "Connection: %s\n"
-                "Date: %s\n"
-                "Server: %s\n"
-                "Last-Modified: %s\n"
-                "Content-Type: %s\n"
-                "Content-Lenght: %llu\n\n"
-                "%s",
-                response->http_version,
-                response->status_code,
-                response->status_msg,
-                response->connection,
-                response->date,
-                response->server,
-                response->last_modified,
-                response->content_type,
-                response->content_length,
-                response->body);
-    } else {
-        sprintf(dest,
-                "%s %d %s\n"
-                "Connection: %s\n"
-                "Date: %s\n"
-                "Server: %s\n\n",
-                response->http_version,
-                response->status_code,
-                response->status_msg,
-                response->connection,
-                response->date,
-                response->server
-        );
-    }
-
-}
-
-void get_status_msg(enum HttpStatus status, char *dest) {
-    switch (status) {
-        case OK:
-            strcpy(dest, "OK");
-            break;
-        case NOT_FOUND:
-            strcpy(dest, "Not Found");
-    }
-}
 
 

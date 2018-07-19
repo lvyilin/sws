@@ -38,7 +38,7 @@ void request_parse(char *request, int len, struct RequestInfo *info) {
     buffer2[k] = '\0';
     strcpy(info->url_pattern, buffer2);
 
-    //TODO: post method code here
+    // parse post body
     if (info->method == POST) {
         char *body = strstr(request, "\r\n\r\n");
         body += sizeof("\r\n\r\n");

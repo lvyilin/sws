@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include "response.h"
 #include "fileio.h"
+#include "parser.h"
 
 int is_regular_file(const char *path) {
     struct stat path_stat;
@@ -59,7 +60,9 @@ void get_url_path(char *url, char *index_path, char *dest) {
     dir[cur] = '\0';
 
     strcpy(dest, index_path);
-    strcat(dest, "/");
+//    if (dest[strlen(dest) - 1] != '/') {
+//        strcat(dest, "/");
+//    }
     strcat(dest, dir);
 //    if (!is_regular_file(dest)) {
 //        if (dest[strlen(dest) - 1] != '/')
@@ -79,7 +82,7 @@ int get_file_info(char *filepath, struct Response *header) {
         }
         return OK;
     }
-    return NOT_FOUND;
+    return Not_Found;
 }
 
 
@@ -107,13 +110,14 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
 
     } else {
         char urlpath[1024];
-
         get_url_path(request.url_pattern, index_path, urlpath);
+        printf("%s\n", urlpath);
+
         switch (request.method) {
             case GET: {
                 if (is_regular_file(urlpath)) {
                     response_header.status_code = get_file_info(urlpath, &response_header);
-                    if (response_header.status_code != NOT_FOUND)
+                    if (response_header.status_code != Not_Found)
                         read_file(urlpath, response_header.body, sizeof(response_header.body));
                     response_header.content_source = File;
 
@@ -125,7 +129,7 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
                     response_header.content_source = Directory;
 
                 } else {
-                    response_header.status_code = NOT_FOUND;
+                    response_header.status_code = Not_Found;
                     response_header.content_source = EmptyContent;
                 }
                 break;
@@ -147,7 +151,7 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
                 } else if (is_valid_dir(urlpath)) {
                     response_header.status_code = OK;
                 } else {
-                    response_header.status_code = NOT_FOUND;
+                    response_header.status_code = Not_Found;
                 }
                 response_header.content_source = EmptyContent;
                 break;
@@ -155,13 +159,20 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
             case PUT: {
                 if (is_regular_file(urlpath)) {
                     response_header.status_code = get_file_info(urlpath, &response_header);
-                    if (response_header.status_code != NOT_FOUND)
-
-                        write_file(urlpath, request.body);
-                    response_header.content_source = File;
-
+                    if (response_header.status_code != Not_Found) {
+                        char put_data[MAX_REQUEST_BODY_SIZE];
+                        parameter_parse(request.body, PutDataKey, put_data);
+                        if (!write_file(urlpath, put_data)) {
+                            response_header.status_code = Internal_Server_Error;
+                        } else {
+                            response_header.status_code = OK;
+                        }
+                        response_header.content_source = File;
+                    } else {
+                        response_header.content_source = EmptyContent;
+                    }
                 } else {
-                    response_header.status_code = NOT_FOUND;
+                    response_header.status_code = Not_Found;
                     response_header.content_source = EmptyContent;
                 }
                 break;
@@ -244,11 +255,14 @@ void get_status_msg(enum HttpStatus status, char *dest) {
         case OK:
             strcpy(dest, "OK");
             break;
-        case NOT_FOUND:
+        case Not_Found:
             strcpy(dest, "Not Found");
             break;
         case Bad_Request:
             strcpy(dest, "Bad Request");
+            break;
+        case Internal_Server_Error:
+            strcpy(dest, "Internal Server Error");
             break;
     }
 }

@@ -3,6 +3,7 @@
 const int HttpMethodNum = 5;
 const char *HttpMethodStr[] = {"GET", "POST", "HEAD", "PUT", "DELETE"};
 const char *IndexFile = "index.html";
+const char *PutDataKey = "data";
 
 int starts_with(const char *pre, const char *str, int str_len) {
     unsigned long lenpre = strlen(pre);

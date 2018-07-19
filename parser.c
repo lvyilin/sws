@@ -3,22 +3,22 @@
 
 void request_parse(char *request, int len, struct RequestInfo *info) {
     time_t rawtime;
-    struct tm * timeinfo;
-    time ( &rawtime );
-    timeinfo = localtime ( &rawtime);
+    struct tm *timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
 
     sprintf(info->date, "%s", asctime(timeinfo));
-    info->date[strlen(info->date)-1] = '\0';
+    info->date[strlen(info->date) - 1] = '\0';
 
     info->method = Invalid;
     char buffer[128];
     int i = 0;
-    while (i < len && request[i] != '\r' &&request[i]!='\n' && request[i] != EOF) {
+    while (i < len && request[i] != '\r' && request[i] != '\n' && request[i] != EOF) {
         buffer[i] = request[i];
         ++i;
     }
     buffer[i] = '\0';
-    strcpy(info->first_line,buffer);
+    strcpy(info->first_line, buffer);
 
     for (int i = 0; i < HttpMethodNum; ++i) {
         if (starts_with(HttpMethodStr[i], buffer, strlen(buffer))) {
@@ -39,9 +39,21 @@ void request_parse(char *request, int len, struct RequestInfo *info) {
     strcpy(info->url_pattern, buffer2);
 
     // parse post body
-    if (info->method == POST) {
+    if (info->method == POST || info->method == PUT) {
         char *body = strstr(request, "\r\n\r\n");
-        body += sizeof("\r\n\r\n");
+        body += strlen("\r\n\r\n");
         strcpy(info->body, body);
+    }
+}
+
+void parameter_parse(char *body, char *key, char *value) {
+    if (strlen(body) > 0) {
+        char *p = strstr(body, key);
+        p += strlen(key) + 1; // key=
+        int i = 0;
+        while (p[i] != '&' && p[i] != '\0' && p[i] != '\r' && p[i] != '\n') {
+            value[i] = p[i];
+            ++i;
+        }
     }
 }

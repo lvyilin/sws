@@ -8,4 +8,5 @@
 
 void request_parse(char *request, int len, struct RequestInfo *info);
 
+void parameter_parse(char *body, char *key, char *value);
 #endif //SWS_PARSER_H

@@ -9,6 +9,7 @@
 extern const int HttpMethodNum;
 extern const char *HttpMethodStr[];
 extern const char *IndexFile;
+extern const char *PutDataKey;
 enum HttpMethod {
     GET = 0,
     POST = 1,
@@ -20,8 +21,9 @@ enum HttpMethod {
 
 enum HttpStatus {
     OK = 200,
-    NOT_FOUND = 404,
-    Bad_Request = 400
+    Not_Found = 404,
+    Bad_Request = 400,
+    Internal_Server_Error = 500
 };
 
 // for response header
@@ -47,15 +49,15 @@ struct Response {
 };
 
 
-#define MAX_BODY_SIZE 1048576
-#define MAX_URL_SIZE 1024
+#define MAX_REQUEST_BODY_SIZE 1048576
+#define MAX_REQUEST_URL_SIZE 1024
 struct RequestInfo {
     char ip_address[46];
     char date[64];
     char first_line[64];
     enum HttpMethod method;
-    char url_pattern[MAX_URL_SIZE];
-    char body[MAX_BODY_SIZE];
+    char url_pattern[MAX_REQUEST_URL_SIZE];
+    char body[MAX_REQUEST_BODY_SIZE];
 };
 
 struct ResponseInfo {

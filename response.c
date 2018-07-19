@@ -153,8 +153,17 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
                 break;
             }
             case PUT: {
+                if (is_regular_file(urlpath)) {
+                    response_header.status_code = get_file_info(urlpath, &response_header);
+                    if (response_header.status_code != NOT_FOUND)
 
+                        write_file(urlpath, request.body);
+                    response_header.content_source = File;
 
+                } else {
+                    response_header.status_code = NOT_FOUND;
+                    response_header.content_source = EmptyContent;
+                }
                 break;
             }
             default:

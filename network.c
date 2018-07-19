@@ -49,7 +49,10 @@ void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, c
             exit(EXIT_FAILURE);
         }
 
-        read(new_socket, buffer, MAX_REQUEST_BUFFER);
+        if (read(new_socket, buffer, MAX_REQUEST_BUFFER) < 0) {
+            close(new_socket);
+            continue;
+        }
         printf("%s\n", buffer);
         struct RequestInfo req_info;
         struct ResponseInfo resp_info;

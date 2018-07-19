@@ -20,6 +20,18 @@ void read_file(char *filepath, char *dest, int max_len) {
 
 }
 
+int write_file(char *filepath, char *src) {
+    FILE *fp = fopen(filepath, "w");
+
+    if (fp != NULL) {
+        fprintf(fp, "%s", src);
+        fclose(fp);
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 int is_absolute_path(char *filepath) {
     if (filepath != NULL && (filepath[0] == '/')) {
         return 1;

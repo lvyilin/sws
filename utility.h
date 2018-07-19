@@ -3,6 +3,7 @@
 
 #define MAX_RESPONSE_BUFFER (1024*256)
 #define MAX_RESPONSE_BODY_BUFFER ((1024*256)-720)
+
 #include <string.h>
 
 extern const int HttpMethodNum;
@@ -18,9 +19,17 @@ enum HttpMethod {
 };
 
 enum HttpStatus {
-    OK = 200, NOT_FOUND = 404
+    OK = 200,
+    NOT_FOUND = 404
 };
 
+// for response header
+enum ContentSource {
+    EmptyContent = 0,
+    File,
+    Directory,
+    Other
+};
 
 struct Response {
     char http_version[16];
@@ -33,6 +42,7 @@ struct Response {
     char content_type[256];
     unsigned long long content_length;
     char body[MAX_RESPONSE_BODY_BUFFER];
+    enum ContentSource content_source;
 };
 
 
@@ -47,10 +57,11 @@ struct RequestInfo {
     char body[MAX_BODY_SIZE];
 };
 
-struct ResponseInfo{
+struct ResponseInfo {
     char status_msg[16];
     unsigned long long content_length;
 };
+
 
 int starts_with(const char *pre, const char *str, int str_len);
 

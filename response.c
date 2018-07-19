@@ -126,7 +126,17 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
                 }
                 break;
             }
+            case POST: {
+                sprintf(response_header.body,
+                        "<html><head><title>sws post</title></head><body>"
+                        "<pre>Location:%s\r\nPost data: \r\n%s\r\n</pre></body></html>",
+                        urlpath,
+                        request.body
 
+                );
+                response_header.status_code = OK;
+                break;
+            }
         }
     }
     strcpy(response_header.content_type, "text/html; charset=UTF-8");

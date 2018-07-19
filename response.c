@@ -36,7 +36,7 @@ void exec_command(const char *command, char *output) {
 
 }
 
-void get_basic_info(struct Response *header) {
+void get_date_info(struct Response *header) {
     struct tm *gtime;
     time_t now;
     time(&now);
@@ -90,7 +90,7 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
     strcpy(response_header.http_version, HTTP_VERSION);
     strcpy(response_header.connection, CONNECTION_TYPE);
     strcpy(response_header.server, SERVER_INFO);
-    get_basic_info(&response_header);
+    get_date_info(&response_header);
 
     if (cgi_path != NULL && starts_with("/cgi-bin/", request.url_pattern, strlen(request.url_pattern))) {
         response_header.status_code = OK;
@@ -99,6 +99,7 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
         while (request.url_pattern[cursor] != '\0' && request.url_pattern[cursor] != ' ') {
             process_name[cur++] = request.url_pattern[cursor++];
         }
+        process_name[cur] = '\0';
         char command[512];
         sprintf(command, "%s/%s 2>&1", cgi_path, process_name);
         exec_command(command, response_header.body);
@@ -108,26 +109,23 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
         char urlpath[1024];
 
         get_url_path(request.url_pattern, index_path, urlpath);
-        if (is_regular_file(urlpath)) {
-            response_header.status_code = get_file_info(urlpath, &response_header);
+        switch (request.method) {
+            case GET: {
+                if (is_regular_file(urlpath)) {
+                    response_header.status_code = get_file_info(urlpath, &response_header);
+                    if (response_header.status_code != NOT_FOUND)
+                        read_file(urlpath, response_header.body, sizeof(response_header.body));
 
-            switch (request.method) {
-                case GET: {
-                    read_file(urlpath, response_header.body, sizeof(response_header.body));
-                    break;
+                } else if (is_valid_dir(urlpath)) {
+                    char cmd[256];
+                    sprintf(cmd, "ls -lhF %s", urlpath);
+                    exec_command(cmd, response_header.body);
+
+                } else {
+                    response_header.status_code = NOT_FOUND;
                 }
-                case POST:
-
-                    break;
-                default:
-                    break;
+                break;
             }
-        } else if (is_valid_dir(urlpath)) {
-            char cmd[256];
-            sprintf(cmd, "ls -lhF %s", urlpath);
-            exec_command(cmd, response_header.body);
-
-        } else {
 
         }
     }

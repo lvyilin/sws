@@ -5,7 +5,7 @@
 #include "utility.h"
 #include <time.h>
 
-void get_basic_info(struct Response *header);
+void get_date_info(struct Response *header);
 
 void get_response(struct RequestInfo request,struct ResponseInfo *response_info, char *response, char *index_path, char *cgi_path);
 

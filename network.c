@@ -17,7 +17,6 @@ void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, c
     struct sockaddr_in address;
     int opt = 1;
     int addrlen = sizeof(address);
-    char buffer[MAX_REQUEST_BUFFER] = {0};
 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("socket failed");
@@ -43,6 +42,7 @@ void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, c
         exit(EXIT_FAILURE);
     }
     do {
+        char buffer[MAX_REQUEST_BUFFER] = {0};
         if ((new_socket = accept(server_fd, (struct sockaddr *) &address,
                                  (socklen_t *) &addrlen)) < 0) {
             perror("accept");
@@ -50,16 +50,17 @@ void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, c
         }
 
         read(new_socket, buffer, MAX_REQUEST_BUFFER);
-
+//        printf("%s\n", buffer);
         struct RequestInfo req_info;
         struct ResponseInfo resp_info;
-        struct sockaddr_in* v4addr = (struct sockaddr_in*)&address;
+        struct sockaddr_in *v4addr = (struct sockaddr_in *) &address;
         struct in_addr ipaddr = v4addr->sin_addr;
-        inet_ntop( AF_INET, &ipaddr, req_info.ip_address, INET_ADDRSTRLEN );
-        request_parse(buffer, strlen(buffer),&req_info);
+        inet_ntop(AF_INET, &ipaddr, req_info.ip_address, INET_ADDRSTRLEN);
+        request_parse(buffer, strlen(buffer), &req_info);
 
         char response_buffer[MAX_RESPONSE_BUFFER];
-        get_response(req_info,&resp_info, response_buffer, index_path, cgi_path);
+        get_response(req_info, &resp_info, response_buffer, index_path, cgi_path);
+        printf("%s\n", response_buffer);
 
         send(new_socket, response_buffer, strlen(response_buffer), 0);
 
@@ -67,7 +68,7 @@ void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, c
 
         // logging
         char log_info[256];
-        log_to(&req_info,&resp_info,logger);
+        log_to(&req_info, &resp_info, logger);
         fflush(logger);
 
     } while (!debug);

@@ -14,6 +14,7 @@
 #include "fileio.h"
 #include "utility.h"
 
+in_addr_t get_binary_addr(const char *src);
 void start_listener(int port, char *bind_addr, FILE *logger, char *index_path, char *cgi_path, int debug);
 
 #endif //SWS_NET_H

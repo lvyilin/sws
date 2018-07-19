@@ -177,6 +177,25 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
                 }
                 break;
             }
+            case DELETE:{
+                if (is_regular_file(urlpath)) {
+                    response_header.status_code = get_file_info(urlpath, &response_header);
+                    if (response_header.status_code != Not_Found) {
+                        if (!delete_file(urlpath)) {
+                            response_header.status_code = Internal_Server_Error;
+                        } else {
+                            response_header.status_code = OK;
+                        }
+                        response_header.content_source = File;
+                    } else {
+                        response_header.content_source = EmptyContent;
+                    }
+                } else {
+                    response_header.status_code = Not_Found;
+                    response_header.content_source = EmptyContent;
+                }
+                break;
+            }
             default:
                 response_header.status_code = Bad_Request;
                 break;

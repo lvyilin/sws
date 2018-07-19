@@ -20,7 +20,8 @@ enum HttpMethod {
 
 enum HttpStatus {
     OK = 200,
-    NOT_FOUND = 404
+    NOT_FOUND = 404,
+    Bad_Request = 400
 };
 
 // for response header

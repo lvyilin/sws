@@ -152,6 +152,14 @@ void get_response(struct RequestInfo request, struct ResponseInfo *response_info
                 response_header.content_source = EmptyContent;
                 break;
             }
+            case PUT: {
+
+
+                break;
+            }
+            default:
+                response_header.status_code = Bad_Request;
+                break;
         }
     }
     strcpy(response_header.content_type, "text/html; charset=UTF-8");
@@ -229,6 +237,10 @@ void get_status_msg(enum HttpStatus status, char *dest) {
             break;
         case NOT_FOUND:
             strcpy(dest, "Not Found");
+            break;
+        case Bad_Request:
+            strcpy(dest, "Bad Request");
+            break;
     }
 }
 

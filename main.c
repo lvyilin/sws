@@ -75,6 +75,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 static struct argp argp = {options, parse_opt, 0, 0};
 
 void to_absolute_path(char *path, char *buffer, char **arg) {
+    if (!path) return;
     if (!is_absolute_path(path)) {
         get_absolute_path(path, buffer);
         (*arg) = buffer;
@@ -96,12 +97,18 @@ int main(int argc, char *argv[]) {
        be reflected in arguments. */
     argp_parse(&argp, argc, argv, 0, 0, &arguments);
     char dir_buffer[1024], dir_buffer2[1024], dir_buffer3[1024];
-    strcpy(dir_buffer, arguments.cgi_dir);
-    strcpy(dir_buffer2, arguments.log_file);
-    strcpy(dir_buffer3, arguments.index_path);
-    arguments.cgi_dir = dir_buffer;
-    arguments.log_file = dir_buffer2;
-    arguments.index_path = dir_buffer3;
+    if (arguments.cgi_dir) {
+        strcpy(dir_buffer, arguments.cgi_dir);
+        arguments.cgi_dir = dir_buffer;
+    }
+    if (arguments.log_file) {
+        strcpy(dir_buffer2, arguments.log_file);
+        arguments.log_file = dir_buffer2;
+    }
+    if (arguments.index_path) {
+        strcpy(dir_buffer3, arguments.index_path);
+        arguments.index_path = dir_buffer3;
+    }
     /* Make arguments path to absolute path */
     char buffer[1024], buffer2[1024], buffer3[1024];
     to_absolute_path(arguments.index_path, buffer3, &arguments.index_path);

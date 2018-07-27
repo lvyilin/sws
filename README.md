@@ -51,17 +51,17 @@ sws [ −dh] [ −c dir] [ −i address] [ −l file] [ −p port] dir
 | fileio   | 文件IO             |
 
 ### 函数说明
-+ main.c
++ main
 ```c
 argp_parse(&argp, argc, argv, 0, 0, &arguments);
 解析命令行参数，库函数
 ```
-+ utility.c
++ utility
 ```c
 int starts_with(const char *pre, const char *str, int str_len);
 工具函数，判断字符串是否为指定开头
 ```
-+ network.c
++ network
 ```c
 in_addr_t get_binary_addr(const char *src);
 获得二进制ip地址

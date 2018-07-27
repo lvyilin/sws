@@ -26,6 +26,10 @@ cd build
 cmake ..
 make
 ```
+### 运行说明
+```shell
+sws [ −dh] [ −c dir] [ −i address] [ −l file] [ −p port] dir
+```
 ### 模块说明
 
 | 模块   | 用途               |

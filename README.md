@@ -4,6 +4,14 @@
 
 更多信息参见sws.1.pdf。
 
+## 项目规划
+### 开发环境和工具
++ 开发环境：Ubuntu
++ 开发语言：C 99
++ 开发工具：CLion
++ 构建工具：CMake 3.10+
+### 开发规范
++ 代码风格：[Google C++风格指南](http://zh-google-styleguide.readthedocs.io/en/latest/google-cpp-styleguide/)
 ## 功能说明
 ### GET
 #### 文件 & 文件夹

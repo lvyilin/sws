@@ -2,7 +2,6 @@
 ============
 **sws** 是一个简单的web服务器。支持`GET`, `POST`, `HEAD`, `PUT`, `DELETE`请求。
 
-更多信息参见sws.1.pdf。
 
 ## 项目规划
 ### 开发环境和工具
@@ -120,4 +119,4 @@ void get_absolute_path(char *relative_path, char *absolute_path);
 ## 运行截图
 查看Screenshot文件夹。
 ## License
-2018.8前版权归作者所有，之后使用MIT协议。
+MIT协议。
